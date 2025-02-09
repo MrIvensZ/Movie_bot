@@ -115,8 +115,11 @@ def search_date(message):
                           ''',
                           (title,)
                           )
-    date_list = date.fetchall()[0]
-    bot.send_message(chat_id, str(date_list))
+    date_list = date.fetchall()
+    if not date_list:
+        bot.send_message(chat_id, 'Такого названия нет.')
+    else:
+        bot.send_message(chat_id, str(date_list[0]))
 
 
 def search_title(message):
@@ -129,8 +132,11 @@ def search_title(message):
                            ''',
                            (date,)
                            )
-    title_list = title.fetchall()[0]
-    bot.send_message(chat_id, str(title_list))
+    title_list = title.fetchall()
+    if not title_list:
+        bot.send_message(chat_id, 'Такой даты нет.')
+    else:
+        bot.send_message(chat_id, str(title_list[0]))
 
 
 @bot.message_handler(commands=['обновить',])
