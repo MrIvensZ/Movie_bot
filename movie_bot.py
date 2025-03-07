@@ -9,7 +9,7 @@ load_dotenv()
 secret_token = os.getenv('TOKEN')
 bot = TeleBot(token=secret_token)
 
-connection = sqlite3.connect('Movie_bot/movies_database.db',
+connection = sqlite3.connect('movies_database.db',
                              check_same_thread=False)
 cursor = connection.cursor()
 
