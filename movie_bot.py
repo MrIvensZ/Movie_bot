@@ -1,5 +1,5 @@
 import os
-import sqlite3
+import psycopg2
 
 from dotenv import load_dotenv
 from telebot import TeleBot, types
@@ -9,13 +9,17 @@ load_dotenv()
 secret_token = os.getenv('TOKEN')
 bot = TeleBot(token=secret_token)
 
-connection = sqlite3.connect('movies_database.db',
-                             check_same_thread=False)
+connection = psycopg2.connect(
+    host=os.getenv('HOST'),
+    user=os.getenv('USER'),
+    password=os.getenv('PASSWORD'),
+    database=os.getenv('DATABASE'),
+)
+
 cursor = connection.cursor()
 
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS movies (
-id INTEGER PRIMARY KEY,
 title TEXT NOT NULL,
 search_date TEXT NOT NULL
 )
@@ -26,7 +30,7 @@ def db_add_movie(title: str, search_date: str):
     cursor.execute('''
                    INSERT INTO movies
                    (title, search_date)
-                   VALUES (?, ?)''',
+                   VALUES (%s,%s)''',
                    (title, search_date)
                    )
     connection.commit()
@@ -35,7 +39,7 @@ def db_add_movie(title: str, search_date: str):
 def db_delete_movie(title: str):
     cursor.execute('''
                    DELETE FROM movies
-                   WHERE title = ?''',
+                   WHERE title = %s''',
                    (title,)
                    )
     connection.commit()
@@ -44,8 +48,8 @@ def db_delete_movie(title: str):
 def db_update_title(title: str, new_title: str):
     cursor.execute('''
                    UPDATE movies
-                   SET title = ?
-                   WHERE title = ?
+                   SET title = %s
+                   WHERE title = %s
                    ''',
                    (new_title, title)
                    )
@@ -55,8 +59,8 @@ def db_update_title(title: str, new_title: str):
 def db_update_date(title: str, new_date: str):
     cursor.execute('''
                    UPDATE movies
-                   SET search_date = ?
-                   WHERE title = ?
+                   SET search_date = %s
+                   WHERE title = %s
                    ''',
                    (new_date, title)
                    )
@@ -111,7 +115,7 @@ def search_date(message):
     date = cursor.execute('''
                           SELECT search_date
                           FROM movies
-                          WHERE title = ?;
+                          WHERE title = %s;
                           ''',
                           (title,)
                           )
@@ -128,7 +132,7 @@ def search_title(message):
     title = cursor.execute('''
                            SELECT title
                            FROM movies
-                           WHERE search_date = ?;
+                           WHERE search_date = %s;
                            ''',
                            (date,)
                            )
@@ -210,9 +214,10 @@ def delete_title(message):
 @bot.message_handler(commands=['фильмы',])
 def show_movies(message):
     chat_id = message.chat.id
-    movies = cursor.execute('SELECT title, search_date FROM movies;')
-    movies_list = movies.fetchall()
-    movies_str = "\n".join([str(movie) for movie in movies_list])
+    cursor.execute('SELECT title, search_date FROM movies;')
+    movies = cursor.fetchall()
+    print(movies)
+    movies_str = "\n".join([str(movie) for movie in movies])
     bot.send_message(chat_id, movies_str)
 
 
