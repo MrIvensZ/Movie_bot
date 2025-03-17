@@ -112,35 +112,37 @@ def choice_search(message):
 def search_date(message):
     chat_id = message.chat.id
     title = message.text
-    date = cursor.execute('''
-                          SELECT search_date
-                          FROM movies
-                          WHERE title = %s;
-                          ''',
-                          (title,)
-                          )
-    date_list = date.fetchall()
+    cursor.execute('''
+                   SELECT search_date
+                   FROM movies
+                   WHERE title = %s;
+                   ''',
+                   (title,)
+                   )
+    date_list = cursor.fetchall()
     if not date_list:
         bot.send_message(chat_id, 'Такого названия нет.')
     else:
-        bot.send_message(chat_id, str(date_list[0]))
+        date = date_list[0][0]
+        bot.send_message(chat_id, f'"{title}" был отсмотрен: {date}')
 
 
 def search_title(message):
     chat_id = message.chat.id
     date = message.text
-    title = cursor.execute('''
-                           SELECT title
-                           FROM movies
-                           WHERE search_date = %s;
-                           ''',
-                           (date,)
-                           )
-    title_list = title.fetchall()
+    cursor.execute('''
+                   SELECT title
+                   FROM movies
+                   WHERE search_date = %s;
+                   ''',
+                   (date,)
+                   )
+    title_list = cursor.fetchall()
     if not title_list:
         bot.send_message(chat_id, 'Такой даты нет.')
     else:
-        bot.send_message(chat_id, str(title_list[0]))
+        title = title_list[0][0]
+        bot.send_message(chat_id, f'{date} был отсмотрен "{title}"')
 
 
 @bot.message_handler(commands=['обновить',])
@@ -216,9 +218,11 @@ def show_movies(message):
     chat_id = message.chat.id
     cursor.execute('SELECT title, search_date FROM movies;')
     movies = cursor.fetchall()
-    print(movies)
-    movies_str = "\n".join([str(movie) for movie in movies])
-    bot.send_message(chat_id, movies_str)
+    header = '| Название | Дата |\n|----------|----------|'
+    movies_str = [header]
+    for movie in movies:
+        movies_str.append(f'| {movie[0]} | {movie[1]} |')
+    bot.send_message(chat_id, '\n'.join(movies_str), parse_mode='Markdown')
 
 
 @bot.message_handler(commands=['добавить',])
