@@ -1,6 +1,7 @@
 import logging
 
 from telebot import TeleBot, types
+from tabulate import tabulate
 
 from config import Config
 from database import (connection,
@@ -107,14 +108,11 @@ def show_movies(message):
         with connection.cursor() as cursor:
             cursor.execute('SELECT title, search_date FROM movies;')
             movies = cursor.fetchall()
-            header = '| Название | Дата |\n|----------|----------|'
-            movies_str = [header]
-            for movie in movies:
-                movies_str.append(f'| {movie[0]} | {movie[1]} |')
     except Exception as e:
         logging.error(f"Ошибка при выводе списка фильмов: {e}")
 
-    bot.send_message(chat_id, '\n'.join(movies_str), parse_mode='Markdown')
+    table = tabulate(movies, headers=["Название", "Дата"], tablefmt="pretty")
+    bot.send_message(chat_id, f"<pre>{table}</pre>", parse_mode="HTML")
 
 
 @bot.message_handler(commands=['обновить',])
