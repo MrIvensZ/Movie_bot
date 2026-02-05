@@ -6,8 +6,12 @@ load_dotenv()
 
 
 class Config:
-    TOKEN = os.getenv('TOKEN')
-    DB_HOST = os.getenv('HOST')
-    DB_USER = os.getenv('USER')
-    DB_PASSWORD = os.getenv('PASSWORD')
-    DB_NAME = os.getenv('DATABASE')
+    """
+    Конфигурационный класс для бота
+    """
+    TOKEN = os.getenv('TOKEN')  # токен
+    DB_HOST = os.getenv('DB_HOST')  # хост
+    DB_USER = os.getenv('DB_USER')  # пользователь БД
+    DB_PASSWORD = os.getenv('DB_PASSWORD')  # пароль
+    DB_NAME = os.getenv('DB_NAME')  # БД
+    DB_PORT = os.getenv('DB_PORT')  # порт
