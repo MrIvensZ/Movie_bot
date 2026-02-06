@@ -4,12 +4,7 @@ from telebot import TeleBot, types
 from tabulate import tabulate
 
 from config import Config
-from database import (connection,
-                      start_database,
-                      db_add_movie,
-                      db_delete_movie,
-                      db_update_date,
-                      db_update_title)
+from database import Database
 from handlers import ask_for_input
 
 bot = TeleBot(token=Config.TOKEN)
@@ -194,7 +189,7 @@ def save_date(message, title):
 
 
 def main():
-    start_database()
+    db = Database()
     bot.polling()
 
 
