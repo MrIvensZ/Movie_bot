@@ -60,7 +60,7 @@ class Database():
         finally:
             cur.close()
 
-    def db_add_movie(self, title: str, search_date: str):
+    def add_movie(self, title: str, search_date: str):
         """
         Добавление фильма в таблицу
 
@@ -80,7 +80,7 @@ class Database():
         except Exception as e:
             logging.error(f'Ошибка при добавлении фильма: {e}')
 
-    def db_delete_movie(self, title: str):
+    def delete_movie(self, title: str):
         """
         Удаление фильма
 
@@ -97,7 +97,7 @@ class Database():
         except Exception as e:
             logging.error(f'Ошибка при удалении фильма: {e}')
 
-    def db_update_title(self, title: str, new_title: str):
+    def update_title(self, title: str, new_title: str):
         """
         Замена названия фильма
 
@@ -118,7 +118,7 @@ class Database():
         except Exception as e:
             logging.error(f'Ошибка при обновлении названия фильма: {e}')
 
-    def db_update_date(self, title: str, new_date: str):
+    def update_date(self, title: str, new_date: str):
         """
         Обновление даты
 
