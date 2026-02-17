@@ -2,11 +2,14 @@
 Класс Database отвечает за взаимодействия с БД
 """
 
-import psycopg2
 import logging
 
 from contextlib import contextmanager
-from config import Config
+from sqlalchemy import create_engine, insert
+from sqlalchemy.engine import URL
+
+from config import Config, DB_PARAMS, get_url
+from models import movies
 
 
 class Database():
@@ -14,51 +17,29 @@ class Database():
     Класс БД
     """
     def __init__(self):
-        self.database_parametres = {
-            'host': Config.DB_HOST,
-            'user': Config.DB_USER,
-            'password': Config.DB_PASSWORD,
-            'dbname': Config.DB_NAME,
-            'port': Config.DB_PORT
-            }
-        self.connection = None
+        self.url = get_url(DB_PARAMS)
+        self.engine = create_engine(self.url, echo=True)
 
-    def connect(self):
-        """
-        Метод создания соединения с БД
-        """
-        if self.connection is None:
-            try:
-                self.connection = psycopg2.connect(**self.database_parametres)
-            except Exception as e:
-                logging.error(f'Ошибка при установке соединения с БД: {e}')
-        return self.connection
+    # def connect(self):
+    #     """
+    #     Метод создания соединения с БД
+    #     """
+    #     if self.engine is None:
+    #         try:
+    #             self.engine = create_engine(self.url, echo=True)
+    #         except Exception as e:
+    #             logging.error(f'Ошибка при установке соединения с БД: {e}')
+    #     return self.connection
 
-    def close(self):
-        """
-        Метод закрытия соединения
+    # def close(self):
+    #     """
+    #     Метод закрытия соединения
 
-        :param conn: объект соединения
-        """
-        if self.connection is not None:
-            self.connection.close()
-            self.connection = None
-
-    @contextmanager
-    def get_cursor(self):
-        """
-        Кастомный контекстный менедждер для создания курсора
-        """
-        conn = self.connect()
-        cur = conn.cursor()
-        try:
-            yield cur
-            conn.commit()
-        except Exception:
-            conn.rollback()
-            raise
-        finally:
-            cur.close()
+    #     :param conn: объект соединения
+    #     """
+    #     if self.connection is not None:
+    #         self.connection.close()
+    #         self.connection = None
 
     def add_movie(self, title: str, search_date: str):
         """
@@ -70,15 +51,17 @@ class Database():
         :type search_date: str
         """
         try:
-            with self.get_cursor() as cur:
-                cur.execute('''
-                            INSERT INTO movies
-                            (title, search_date)
-                            VALUES (%s,%s)''',
-                            (title, search_date)
-                            )
+            with self.engine.begin() as conn:
+                stmt = movies.insert().values(
+                    title=title,
+                    search_date=search_date
+                )
+                conn.execute(stmt)
+                logging.info(f"Фильм '{title}' успешно добавлен")
+                return True
         except Exception as e:
             logging.error(f'Ошибка при добавлении фильма: {e}')
+            return False
 
     def delete_movie(self, title: str):
         """
