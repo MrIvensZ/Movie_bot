@@ -4,44 +4,21 @@
 
 import logging
 
-from contextlib import contextmanager
-from sqlalchemy import create_engine, insert
-from sqlalchemy.engine import URL
+from sqlalchemy import create_engine, delete, insert, select, update
 
-from config import Config, DB_PARAMS, get_url
-from models import movies
+from config import DB_PARAMS, get_url
 
 
 class Database():
     """
     Класс БД
     """
-    def __init__(self):
+    def __init__(self, movies_table):
         self.url = get_url(DB_PARAMS)
         self.engine = create_engine(self.url, echo=True)
+        self.movies = movies_table
 
-    # def connect(self):
-    #     """
-    #     Метод создания соединения с БД
-    #     """
-    #     if self.engine is None:
-    #         try:
-    #             self.engine = create_engine(self.url, echo=True)
-    #         except Exception as e:
-    #             logging.error(f'Ошибка при установке соединения с БД: {e}')
-    #     return self.connection
-
-    # def close(self):
-    #     """
-    #     Метод закрытия соединения
-
-    #     :param conn: объект соединения
-    #     """
-    #     if self.connection is not None:
-    #         self.connection.close()
-    #         self.connection = None
-
-    def add_movie(self, title: str, search_date: str):
+    def insert_movie(self, title: str, search_date: str):
         """
         Добавление фильма в таблицу
 
@@ -52,13 +29,14 @@ class Database():
         """
         try:
             with self.engine.begin() as conn:
-                stmt = movies.insert().values(
-                    title=title,
-                    search_date=search_date
-                )
-                conn.execute(stmt)
-                logging.info(f"Фильм '{title}' успешно добавлен")
-                return True
+                stmt = (
+                    insert(self.movies)
+                    .values(title=title, search_date=search_date)
+                    )
+                result = conn.execute(stmt)
+                if result.rowcount > 0:
+                    logging.info(f"Фильм '{title}' успешно добавлен")
+                    return True
         except Exception as e:
             logging.error(f'Ошибка при добавлении фильма: {e}')
             return False
@@ -71,14 +49,15 @@ class Database():
         :type title: str
         """
         try:
-            with self.get_cursor() as cur:
-                cur.execute('''
-                            DELETE FROM movies
-                            WHERE title = %s''',
-                            (title,)
-                            )
+            with self.engine.begin() as conn:
+                stmt = delete(self.movies).where(self.movies.c.title == title)
+                result = conn.execute(stmt)
+                if result.rowcount > 0:
+                    logging.info(f"Фильм '{title}' успешно удалён")
+                    return True
         except Exception as e:
             logging.error(f'Ошибка при удалении фильма: {e}')
+            return False
 
     def update_title(self, title: str, new_title: str):
         """
@@ -90,16 +69,21 @@ class Database():
         :type new_title: str
         """
         try:
-            with self.get_cursor() as cur:
-                cur.execute('''
-                            UPDATE movies
-                            SET title = %s
-                            WHERE title = %s
-                            ''',
-                            (new_title, title)
-                            )
+            with self.engine.begin() as conn:
+                stmt = (
+                    update(self.movies)
+                    .where(self.movies.c.title == title)
+                    .values(title=new_title)
+                    )
+                result = conn.execute(stmt)
+                if result.rowcount > 0:
+                    logging.info(
+                        f"Название фильма '{title}' изменено на {new_title}"
+                        )
+                    return True
         except Exception as e:
             logging.error(f'Ошибка при обновлении названия фильма: {e}')
+            return False
 
     def update_date(self, title: str, new_date: str):
         """
@@ -111,29 +95,36 @@ class Database():
         :type new_date: str
         """
         try:
-            with self.get_cursor() as cur:
-                cur.execute('''
-                            UPDATE movies
-                            SET search_date = %s
-                            WHERE title = %s
-                            ''',
-                            (new_date, title)
-                            )
+            with self.engine.begin() as conn:
+                stmt = (
+                    update(self.movies)
+                    .where(self.movies.c.title == title)
+                    .values(search_date=new_date)
+                    )
+                result = conn.execute(stmt)
+                if result.rowcount > 0:
+                    logging.info(
+                        f"дата просмтора фильма '{title}' изменена на {new_date}"
+                        )
+                    return True
         except Exception as e:
             logging.error(
                 f'Ошибка при обновлении даты просмотра фильма: {e}')
+            return False
 
     def get_movies(self):
         """
         Получение списка фильмов
         """
         try:
-            with self.get_cursor() as cur:
-                cur.execute('SELECT title, search_date FROM movies;')
-                movies = cur.fetchall()
-                return movies
+            with self.engine.connect() as conn:
+                query = select(self.movies)
+                result = conn.execute(query)
+                movies_list = result.fetchall()
+                return movies_list
         except Exception as e:
             logging.error(f'Ошибка при выводе списка фильмов: {e}')
+            return False
 
     def search_date(self, title: str):
         """
@@ -143,18 +134,17 @@ class Database():
         :type title: str
         """
         try:
-            with self.get_cursor() as cur:
-                cur.execute('''
-                            SELECT search_date
-                            FROM movies
-                            WHERE title = %s;
-                            ''',
-                            (title,)
-                            )
-                date_list = cur.fetchall()
-                return date_list
+            with self.engine.connect() as conn:
+                query = (
+                    select(self.movies.c.search_date)
+                    .where(self.movies.c.title == title)
+                )
+                result = conn.execute(query)
+                date = result.fetchone()
+                return date
         except Exception as e:
             logging.error(f'Ошибка при поиске даты фильма: {e}')
+            return False
 
     def search_title(self, date: str):
         """
@@ -164,18 +154,14 @@ class Database():
         :type date: str
         """
         try:
-            with self.get_cursor() as cur:
-                cur.execute('''
-                            SELECT title
-                            FROM movies
-                            WHERE search_date = %s;
-                            ''',
-                            (date,)
-                            )
-                title_list = cur.fetchall()
-                return title_list
+            with self.engine.connect() as conn:
+                query = (
+                    select(self.movies.c.title)
+                    .where(self.movies.c.search_date == date)
+                )
+                result = conn.execute(query)
+                title = result.fetchone()
+                return title
         except Exception as e:
             logging.error(f'Ошибка при поиске названия фильма: {e}')
-
-    def __del__(self):
-        self.close()
+            return False
