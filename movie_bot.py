@@ -2,18 +2,16 @@
 Класс Movie_bot отвечает за функционал telegram-бота
 """
 
-from database import Database
-from telebot import TeleBot, types
+from telebot import types
 from tabulate import tabulate
 
-from config import Config
 from handlers import ask_for_input
 
 
 class Movie_bot():
-    def __init__(self):
-        self.bot = TeleBot(token=Config.TOKEN)
-        self.db = Database()
+    def __init__(self, telebot, db):
+        self.bot = telebot
+        self.db = db
         self._register_handlers()
 
     def _register_handlers(self):
@@ -64,21 +62,22 @@ class Movie_bot():
     def search_date(self, message):
         chat_id = message.chat.id
         title = message.text
-        date_list = self.db.search_date(title)
-        if not date_list:
+        date = self.db.search_date(title)
+        if not date:
             self.bot.send_message(chat_id, 'Такого названия нет.')
         else:
-            date = date_list[0][0]
-            self.bot.send_message(chat_id, f'"{title}" был отсмотрен: {date}')
+            # date = date[0]
+            self.bot.send_message(
+                chat_id, f'"{title}" был отсмотрен: {date[0]}')
 
     def search_title(self, message):
         chat_id = message.chat.id
         date = message.text
-        title_list = self.db.search_title(date)
-        if not title_list:
+        title = self.db.search_title(date)
+        if not title:
             self.bot.send_message(chat_id, 'Такой даты нет.')
         else:
-            title = title_list[0][0]
+            title = title[0]
             self.bot.send_message(chat_id, f'{date} был отсмотрен "{title}"')
 
     def show_movies(self, message):
@@ -117,6 +116,7 @@ class Movie_bot():
     def choice_update(self, message, old_title):
         if message.text == 'название':
             ask_for_input(
+                self.bot,
                 message,
                 'Введите новое название.',
                 self.new_title,
@@ -186,7 +186,7 @@ class Movie_bot():
 
     def save_date(self, message, title):
         date = message.text
-        self.db.add_movie(title=title, search_date=date)
+        self.db.insert_movie(title=title, search_date=date)
         self.bot.send_message(
             message.chat.id,
             (f'Фильм {title} занесён в базу данных.\nДата просмотра: {date}.')
@@ -194,4 +194,4 @@ class Movie_bot():
 
     def run(self):
         print('🤖 Бот запущен. Нажмите Ctrl+C для остановки.')
-        self.bot.polling()
+        self.bot.polling(timeout=60)
