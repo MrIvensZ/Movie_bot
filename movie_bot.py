@@ -66,9 +66,8 @@ class Movie_bot():
         if not date:
             self.bot.send_message(chat_id, 'Такого названия нет.')
         else:
-            # date = date[0]
             self.bot.send_message(
-                chat_id, f'"{title}" был отсмотрен: {date[0]}')
+                chat_id, f'"{title}" был отсмотрен: {date}')
 
     def search_title(self, message):
         chat_id = message.chat.id
@@ -77,12 +76,11 @@ class Movie_bot():
         if not title:
             self.bot.send_message(chat_id, 'Такой даты нет.')
         else:
-            title = title[0]
             self.bot.send_message(chat_id, f'{date} был отсмотрен "{title}"')
 
     def show_movies(self, message):
         chat_id = message.chat.id
-        movies = self.db.get_movies()
+        movies = [(i.title, i.search_date) for i in self.db.get_movies()]
         table = tabulate(movies, headers=["Название", "Дата"],
                          tablefmt="pretty")
         self.bot.send_message(chat_id, f"<pre>{table}</pre>",

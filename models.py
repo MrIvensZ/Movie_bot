@@ -1,19 +1,22 @@
 """
 Модели данных для базы данных фильмов.
-Содержит определения всех таблиц и metadata.
+Содержит определения всех таблиц.
 """
 
-from sqlalchemy import Table, Column, String, MetaData
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-# Метаданные для всех таблиц
-metadata = MetaData()
+
+# класс для данных всех таблиц
+class Base(DeclarativeBase):
+    pass
+
 
 # описываем таблицу с фильмами
-movies = Table(
-    'movies',
-    metadata,
-    # title - первичный ключ (уникальный идентификатор)
-    Column('title', String, primary_key=True, nullable=False),
-    # search_date - дата просмотра
-    Column('search_date', String, nullable=False)
-)
+class MoviesORM(Base):
+    __tablename__ = 'movies_orm'
+    title: Mapped[str] = mapped_column(
+        primary_key=True,
+        nullable=False,
+        unique=True
+        )
+    search_date: Mapped[str]
