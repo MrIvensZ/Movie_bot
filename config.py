@@ -20,6 +20,7 @@ class Config:
 
 # словарь с параметрами для подключения к БД
 DB_PARAMS = {
+            'driver': 'postgresql+psycopg2',
             'host': Config.DB_HOST,
             'user': Config.DB_USER,
             'password': Config.DB_PASSWORD,
@@ -35,11 +36,7 @@ def get_url(db_params: dict):
     :param db_params: словарь с параметрами
     :type db_params: dict
     """
-    return URL.create(
-        drivername="postgresql+psycopg2",
-        host=db_params['host'],
-        port=db_params['port'],
-        database=db_params['dbname'],
-        username=db_params['user'],
-        password=db_params['password']
+    return (
+        '{driver}://{user}:{password}@{host}:{port}/{dbname}'
+        .format(**db_params)
         )

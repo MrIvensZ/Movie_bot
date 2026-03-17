@@ -192,4 +192,4 @@ class Movie_bot():
 
     def run(self):
         print('🤖 Бот запущен. Нажмите Ctrl+C для остановки.')
-        self.bot.polling(timeout=60)
+        self.bot.infinity_polling(timeout=60, long_polling_timeout=60)

@@ -57,9 +57,9 @@ DB_USER=postgres
 DB_PASSWORD=your_password
 DB_NAME=movie_bot_db
 ```
-### 5. Инициализация базы данных
+### 5. Применение миграций базы данных
 ```
-python init_db.py
+alembic upgrade head
 ```
 ### 6. Запуск бота
 ```
