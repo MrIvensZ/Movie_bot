@@ -93,6 +93,7 @@ python main.py
 - **pyTelegramBotAPI 4.14+** — взаимодействие с Telegram API
 - **PostgreSQL 13+** — реляционная база данных
 - **SQLAlchemy 2.0.46** — библиотека для работы с базами данных (Core API)
+- **Alembic** — инструмент для миграций базы данных
 - **psycopg2-binary** — адаптер PostgreSQL для Python
 
 #### Утилиты
