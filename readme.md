@@ -22,7 +22,7 @@
 ### 1. Клонирование репозитория
 
 ```bash
-git clone https://github.com/NikitaProkhvatilov/Movie_bot.git
+git clone https://github.com/MrIvensZ/Movie_bot.git
 
 cd Movie_bot
 #### Перейдите в директорию Movie_bot
